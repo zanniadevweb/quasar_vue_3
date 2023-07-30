@@ -31,24 +31,6 @@
       </q-list>
     </q-drawer>
 
-<!--    <section v-if="errored">
-      <p>We're sorry, we're not able to retrieve this information at the moment, please try back later</p>
-    </section>
-
-    <section v-else>
-      <div v-if="loading">Loading...</div>
-
-      <div v-else
-           v-for="currency in info"
-           class="currency">
-        {{ currency.description }}:
-        <span class="lighten">
-          <span v-html="currency.symbol"></span>{{ currency.rate_float | currencydecimal }}
-        </span>
-      </div>
-
-    </section>-->
-
     <div class="q-pa-md">
       <q-table title="Treats"
                :rows="rows"
@@ -67,7 +49,7 @@
 <script>
 // ----- DECLARE IMPORTS BELOW HERE ----
 import { defineComponent, ref } from 'vue'
-import { useCounterStore } from 'stores/counter'; // Quasar (Pinia) Doc. Store + State Management : https://quasar.dev/quasar-cli-vite/state-management-with-pinia
+import { googleSheetStore } from 'stores/google_sheets'; // Quasar (Pinia) Doc. Store + State Management : https://quasar.dev/quasar-cli-vite/state-management-with-pinia
 import EssentialLink from 'components/EssentialLink.vue'
 import axios from 'axios';
 // ----- DECLARE IMPORTS ABOVE HERE ----
@@ -119,13 +101,6 @@ const linksList = [
   }
 ]
 
-const toObject = (arr, headers) => {
-  var rv = {};
-  for (var i = 0; i < arr.length; ++i)
-    rv[headers[i]] = arr[i];
-  return rv;
-}
-
 // ----- DECLARE FUNCTIONS ABOVE HERE ----
 
 export default defineComponent({
@@ -136,7 +111,7 @@ export default defineComponent({
   },
 
   setup () {
-    const store = useCounterStore();
+    const store = googleSheetStore();
     const leftDrawerOpen = ref(false)
 
     return {
@@ -198,30 +173,10 @@ export default defineComponent({
           headerClasses: 'my-special-class'
         },
         { name: 'Famille', label: 'Famille', field: 'Famille', sortable: true },
-        { name: 'Type', label: 'Type', field: 'Type' },
-        { name: 'Quantité', label: 'Quantité', field: 'Quantité' },
-        { name: 'Image', label: 'Image', field: 'Image' }
-        // ,{ name: 'calcium', label: 'Calcium (%)', field: 'calcium', sortable: true, sort: (a, b) => parseInt(a, 10) - parseInt(b, 10) },
-        // { name: 'iron', label: 'Iron (%)', field: 'iron', sortable: true, sort: (a, b) => parseInt(a, 10) - parseInt(b, 10) }
+        { name: 'Type', label: 'Type', field: 'Type', sortable: true },
+        { name: 'Quantité', label: 'Quantité', field: 'Quantité', sortable: true },
+        { name: 'Image', label: 'Image', field: 'Image', sortable: true }
       ],
-      // rows: [
-      //   {
-      //     name: 'Aliment Végétal',
-      //     Alimentvegetal: 'Frozen Yogurt',
-      //     Famille: 159,
-      //     Type: 6.0,
-      //     Quantité: 24,
-      //     Image: 4.0
-      //   },
-      //   {
-      //     name: 'Aliment Végétal',
-      //     Alimentvegetal: 'Ice cream sandwich',
-      //     Famille: 237,
-      //     Type: 9.0,
-      //     Quantité: 37,
-      //     Image: 4.3
-      //   }
-      // ],
       essentialLinks: linksList,
       leftDrawerOpen,
       toggleLeftDrawer () {
@@ -231,53 +186,14 @@ export default defineComponent({
   },
   // ----- DECLARE METHODS BELOW HERE ----
   methods: {
-    // async getApiData() {
-    //     await axios
-    //     .get('https://api.coindesk.com/v1/bpi/currentprice.json')
-    //     .then(response => {
-    //           let json = response.data.bpi
-    //           for (const [key, value] of Object.entries(json)) {
-    //             let val = JSON.stringify(value)
-    //             this.info[key] = value
-    //           }
-    //       });
-    //       console.log(this.info.EUR)
-    // }
-    async getApiData() {
-        var tab_name = 'FruitsAndVegetables';
-        var spreadsheet_id = '19ThQQtvlXImQx2OC3D_pSrNQkx5Mmx4q0MxLkuI3elw';
-        var api_key = 'AIzaSyBW2cIc-aegzxLzbEyzmtgKX-9kCfhmO5M';
-        var url = 'https://sheets.googleapis.com/v4/spreadsheets/' +
-           spreadsheet_id + '/values/' + tab_name +
-           '?alt=json&key=' + api_key;
-        await axios
-        .get(url)
-        .then(response => {
-              let json = response.data.values
-              for (const [key, value] of Object.entries(json)) {
-                // let val = JSON.stringify(value)
-                if (key == 0) {
-                  var headers = value
-                  headers.shift()
-                  headers.unshift('name')
-                } else {
-                  this.info.push(toObject(value, headers))
-                }
-              }
-          });
-          // console.log(this.columns)
-          console.log(this.store)
-          this.store.data = this.info
-          this.rows = this.store.data
-          // console.log(this.store)
-          this.headers = this.info[0];
-          // console.log(this.info)
-          // console.log(this.rows)
-    }
+    // TODO
   },
   // ----- DECLARE METHODS ABOVE HERE ----
   mounted() {
-    this.getApiData();
+    this.store.fetchRows().then( response => {
+        this.rows = this.store.apiData
+      }
+    )
   }
 })
 
