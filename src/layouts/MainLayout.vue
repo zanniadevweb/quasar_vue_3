@@ -25,7 +25,7 @@
           Essential Links
         </q-item-label>
 
-        <EssentialLink v-for="link in essentialLinks"
+        <EssentialLink v-for="link in menu"
                        :key="link.title"
                        v-bind="link" />
       </q-list>
@@ -37,7 +37,7 @@
                :columns="columns"
                row-key="name" />
     </div>
-    <div hidden="hidden">toto{{ store.data }}</div>
+    <div hidden="hidden">toto{{ storeGoogleSheet.data }}</div>
 
 
     <q-page-container>
@@ -49,59 +49,11 @@
 <script>
 // ----- DECLARE IMPORTS BELOW HERE ----
 import { defineComponent, ref } from 'vue'
-import { googleSheetStore } from 'stores/google_sheets'; // Quasar (Pinia) Doc. Store + State Management : https://quasar.dev/quasar-cli-vite/state-management-with-pinia
+import { googleSheetStore } from 'stores/google_sheets';
+import { menuStore } from 'stores/menu';
 import EssentialLink from 'components/EssentialLink.vue'
 import axios from 'axios';
 // ----- DECLARE IMPORTS ABOVE HERE ----
-
-// ----- DECLARE FUNCTIONS BELOW HERE ----
-
-const linksList = [
-  {
-    title: 'Docs',
-    caption: 'quasar.dev',
-    icon: 'school',
-    link: 'https://quasar.dev'
-  },
-  {
-    title: 'Github',
-    caption: 'github.com/quasarframework',
-    icon: 'code',
-    link: 'https://github.com/quasarframework'
-  },
-  {
-    title: 'Discord Chat Channel',
-    caption: 'chat.quasar.dev',
-    icon: 'chat',
-    link: 'https://chat.quasar.dev'
-  },
-  {
-    title: 'Forum',
-    caption: 'forum.quasar.dev',
-    icon: 'record_voice_over',
-    link: 'https://forum.quasar.dev'
-  },
-  {
-    title: 'Twitter',
-    caption: '@quasarframework',
-    icon: 'rss_feed',
-    link: 'https://twitter.quasar.dev'
-  },
-  {
-    title: 'Facebook',
-    caption: '@QuasarFramework',
-    icon: 'public',
-    link: 'https://facebook.quasar.dev'
-  },
-  {
-    title: 'Quasar Awesome',
-    caption: 'Community Quasar projects',
-    icon: 'favorite',
-    link: 'https://awesome.quasar.dev'
-  }
-]
-
-// ----- DECLARE FUNCTIONS ABOVE HERE ----
 
 export default defineComponent({
   name: 'MainLayout',
@@ -111,13 +63,15 @@ export default defineComponent({
   },
 
   setup () {
-    const store = googleSheetStore();
+    const storeGoogleSheet = googleSheetStore();
+    const storeMenu = menuStore();
     const leftDrawerOpen = ref(false)
 
     return {
-      store,
+      storeGoogleSheet,
+      storeMenu,
+      menu: [],
       rows: [],
-      info: [],
       headers: [],
       columns: [ // array of Objects
         // column Object definition
@@ -177,7 +131,6 @@ export default defineComponent({
         { name: 'Quantité', label: 'Quantité', field: 'Quantité', sortable: true },
         { name: 'Image', label: 'Image', field: 'Image', sortable: true }
       ],
-      essentialLinks: linksList,
       leftDrawerOpen,
       toggleLeftDrawer () {
         leftDrawerOpen.value = !leftDrawerOpen.value
@@ -189,9 +142,12 @@ export default defineComponent({
     // TODO
   },
   // ----- DECLARE METHODS ABOVE HERE ----
+  created() {
+    this.menu = this.storeMenu.linksList
+ },
   mounted() {
-    this.store.fetchRows().then( response => {
-        this.rows = this.store.apiData
+    this.storeGoogleSheet.fetchRows().then( response => {
+        this.rows = this.storeGoogleSheet.apiData
       }
     )
   }
